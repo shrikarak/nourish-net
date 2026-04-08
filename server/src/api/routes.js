@@ -22,7 +22,6 @@ function getDistance(lat1, lon1, lat2, lon2) {
   return R * c; // Distance in km
 }
 
-
 // --- Auth ---
 router.post('/register', async (req, res) => {
     const { username, password, role, name, address, contact_person, phone, capacity } = req.body;
@@ -108,6 +107,16 @@ router.get('/donations/nearby', (req, res) => {
     });
 });
 
+router.get('/donations/mine/:user_id', (req, res) => {
+    db.all('SELECT * FROM donations WHERE user_id = ? ORDER BY pickup_time DESC', [req.params.user_id], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
+
+
 // --- Orphanages ---
 router.get('/orphanages/nearby', (req, res) => {
     const { lat, lon, radius = 20 } = req.query;
@@ -129,5 +138,67 @@ router.get('/orphanages/nearby', (req, res) => {
     });
 });
 
+// --- Supplies ---
+router.post('/supplies/order', (req, res) => {
+    const { user_id, item, quantity } = req.body;
+    db.run('INSERT INTO supply_orders (user_id, item, quantity, order_time, status) VALUES (?, ?, ?, ?, ?)',
+        [user_id, item, quantity, new Date().toISOString(), 'placed'],
+        function (err) {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            // Simulate delivery
+            setTimeout(() => {
+                db.run('UPDATE supply_orders SET status = ? WHERE id = ?', ['delivered', this.lastID]);
+            }, 20 * 60 * 1000); // 20 minutes
+            res.json({ id: this.lastID, message: "Order placed successfully." });
+        }
+    );
+});
+
+router.get('/supplies/orders/:user_id', (req, res) => {
+    db.all('SELECT * FROM supply_orders WHERE user_id = ? ORDER BY order_time DESC', [req.params.user_id], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
+    });
+});
+
+// --- Deliveries ---
+router.post('/deliveries/request', (req, res) => {
+    const { donation_id, recipient_id, pickup_address, dropoff_address, estimated_fare } = req.body;
+
+    // 1. Create a delivery record
+    db.run('INSERT INTO deliveries (donation_id, recipient_id, pickup_address, dropoff_address, estimated_fare, booking_time, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [donation_id, recipient_id, pickup_address, dropoff_address, estimated_fare, new Date().toISOString(), 'requested'],
+        function (err) {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            const deliveryId = this.lastID;
+            
+            // 2. Update donation status
+            db.run("UPDATE donations SET status = 'claimed' WHERE id = ?", [donation_id], (err) => {
+                if (err) {
+                    // This is tricky in a real app, might need a transaction
+                    return res.status(500).json({ error: "Failed to update donation status." });
+                }
+
+                // 3. Simulate delivery progress
+                setTimeout(() => {
+                    db.run('UPDATE deliveries SET status = ? WHERE id = ?', ['in_progress', deliveryId]);
+                }, 1 * 60 * 1000); // 1 minute
+                
+                setTimeout(() => {
+                    db.run('UPDATE deliveries SET status = ? WHERE id = ?', ['delivered', deliveryId]);
+                    db.run('UPDATE donations SET status = ? WHERE id = ?', ['delivered', donation_id]);
+                }, 15 * 60 * 1000); // 15 minutes
+
+                res.json({ id: deliveryId, message: "Delivery requested successfully." });
+            });
+        }
+    );
+});
 
 module.exports = router;

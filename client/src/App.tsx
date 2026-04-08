@@ -6,6 +6,8 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import PostDonationPage from './pages/PostDonationPage';
 import ProfilePage from './pages/ProfilePage';
+import SuppliesPage from './pages/SuppliesPage';
+import BookDeliveryPage from './pages/BookDeliveryPage';
 
 const AuthContext = createContext<{ user: any; login: (user: any) => void; logout: () => void; } | null>(null);
 
@@ -46,6 +48,8 @@ function App() {
                     <Route path="/" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
                     <Route path="/donate" element={<PrivateRoute><PostDonationPage /></PrivateRoute>} />
                     <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+                    <Route path="/supplies" element={<PrivateRoute><SuppliesPage /></PrivateRoute>} />
+                    <Route path="/book-delivery/:donationId/:recipientId" element={<PrivateRoute><BookDeliveryPage /></PrivateRoute>} />
                 </Routes>
             </Router>
         </AuthProvider>

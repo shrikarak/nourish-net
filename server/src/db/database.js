@@ -15,15 +15,13 @@ const initDb = () => {
             username TEXT UNIQUE,
             password TEXT,
             role TEXT, -- 'donor' or 'recipient'
-            -- Profile info
-            name TEXT, -- Name of person or orphanage
+            name TEXT,
             contact_person TEXT,
             phone TEXT,
             address TEXT,
-            -- Geolocation for recipients
             latitude REAL,
             longitude REAL,
-            capacity INTEGER -- Number of children for orphanages
+            capacity INTEGER
         )`);
 
         // Donations table for leftover food events
@@ -37,17 +35,42 @@ const initDb = () => {
             address TEXT,
             latitude REAL,
             longitude REAL,
-            status TEXT DEFAULT 'available', -- 'available', 'claimed', 'completed'
+            status TEXT DEFAULT 'available', -- 'available', 'claimed', 'delivery_in_progress', 'delivered'
             FOREIGN KEY (user_id) REFERENCES users(id)
         )`);
-        
+
+        // New table for supply orders
+        db.run(`CREATE TABLE IF NOT EXISTS supply_orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            item TEXT,
+            quantity INTEGER,
+            order_time DATETIME,
+            status TEXT, -- 'placed', 'delivered'
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )`);
+
+        // New table for deliveries
+        db.run(`CREATE TABLE IF NOT EXISTS deliveries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            donation_id INTEGER,
+            recipient_id INTEGER,
+            status TEXT, -- 'requested', 'in_progress', 'delivered'
+            pickup_address TEXT,
+            dropoff_address TEXT,
+            estimated_fare REAL,
+            booking_time DATETIME,
+            FOREIGN KEY (donation_id) REFERENCES donations(id),
+            FOREIGN KEY (recipient_id) REFERENCES users(id)
+        )`);
+
         // Seed initial data
-        const seedUsers = db.prepare("INSERT OR IGNORE INTO users (username, password, role, name, address, latitude, longitude, capacity) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        const seedUsers = db.prepare("INSERT OR IGNORE INTO users (id, username, password, role, name, address, latitude, longitude, capacity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
         // Donor
-        seedUsers.run('event_manager', 'password', 'donor', 'Grand Events', '123 Main St, San Francisco, CA', 37.7749, -122.4194, null);
+        seedUsers.run(1, 'event_manager', 'password', 'donor', 'Grand Events', '123 Main St, San Francisco, CA', 37.7749, -122.4194, null);
         // Recipients
-        seedUsers.run('sunny_orphanage', 'password', 'recipient', 'Sunny Orphanage', '456 Market St, San Francisco, CA', 37.7937, -122.3964, 50);
-        seedUsers.run('happy_home', 'password', 'recipient', 'Happy Home Shelter', '789 Mission St, San Francisco, CA', 37.7833, -122.4092, 30);
+        seedUsers.run(2, 'sunny_orphanage', 'password', 'recipient', 'Sunny Orphanage', '456 Market St, San Francisco, CA', 37.7937, -122.3964, 50);
+        seedUsers.run(3, 'happy_home', 'password', 'recipient', 'Happy Home Shelter', '789 Mission St, San Francisco, CA', 37.7833, -122.4092, 30);
         seedUsers.finalize();
     });
 };

@@ -1,15 +1,19 @@
 
 # NourishNet
 
-**NourishNet** is a web application designed to connect event managers with leftover food to nearby orphanages and shelters. It aims to reduce food waste and provide nutritious meals to children in need by facilitating timely and efficient donations.
+**NourishNet** is a web application designed to connect event managers with leftover food to nearby orphanages and shelters. It aims to reduce food waste and provide nutritious meals to children in need by facilitating timely and efficient donations. This platform also includes simulated integrations for ordering supplies and arranging deliveries.
 
 ## Features
 
 - **Dual User Roles**: Separate registration and dashboards for **Donors** (event managers) and **Recipients** (orphanages).
 - **Location-Based Matching**: Automatically identifies nearby recipients for new food donations using geocoding.
-- **Real-Time Notifications**: A dashboard-based notification system alerts recipients to available food in their vicinity.
-- **Profile Management**: Users can manage their profile information, including address and contact details.
-- **Post Donations**: Donors can easily post details about available leftover food, including type, quantity, and pickup times.
+- **Dashboard & Notifications**: A dashboard-based notification system alerts users to relevant information.
+  - **Recipients** see nearby available food donations.
+  - **Donors** see their own posted donations and can find nearby orphanages to deliver to.
+- **Quick Commerce Simulation**: Donors can order necessary supplies like food containers and markers from a simulated "QuickCart" service.
+- **Courier Service Simulation**: Donors can book a simulated delivery for their food donation to a specific orphanage using a "RideSwift" service.
+- **Profile Management**: Users can manage their profile information.
+- **Post Donations**: Donors can easily post details about available leftover food.
 - **Clean & Modern UI**: Built with React and Material-UI for a responsive and user-friendly experience.
 
 ## Technology Stack
@@ -29,7 +33,7 @@
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/[YOUR_USERNAME]/nourish-net.git
+git clone https://github.com/shrikarak/nourish-net.git
 cd nourish-net
 ```
 
@@ -57,8 +61,12 @@ The frontend development server will start on `http://localhost:3000`.
 1.  Open your browser and navigate to `http://localhost:3000`.
 2.  Register a new account as either a "Donor" or a "Recipient".
 3.  Log in with your new credentials.
-4.  **If you are a Donor**: You will see a list of nearby orphanages. You can post a new donation using the "Post a Donation" button.
-5.  **If you are a Recipient**: You will see a list of nearby available food donations.
+4.  **If you are a Donor**: 
+    - Your dashboard shows your posted donations.
+    - For "available" donations, you'll see a list of nearby orphanages. Click **Request Delivery** to book a simulated courier.
+    - Use the **Post a Donation** button to create a new food availability alert.
+    - Use the **Order Supplies** button to order simulated containers and markers.
+5.  **If you are a Recipient**: Your dashboard shows a list of nearby available food donations, sorted by distance.
 
 **Default Seeded Users for Testing:**
 -   **Donor**: Username: `event_manager`, Password: `password`
@@ -106,4 +114,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 Copyright (c) 2026 Shrikara Kaudambady.
 
 ## Keywords
-food donation, leftover food, event management, orphanage, food for children, charity, social impact, web application, react, nodejs, express, sqlite, geolocation, nutritious food
+food donation, leftover food, event management, orphanage, food for children, charity, social impact, web application, react, nodejs, express, sqlite, geolocation, quick commerce, delivery, courier service, nutritious food

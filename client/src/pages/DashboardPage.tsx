@@ -1,30 +1,44 @@
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useAuth } from '../App';
-import { Typography, Paper, List, ListItem, ListItemText, CircularProgress } from '@mui/material';
+import { Typography, Paper, List, ListItem, ListItemText, CircularProgress, Button, Box, Divider } from '@mui/material';
 
 const DashboardPage = () => {
     const auth = useAuth();
-    const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    // For recipients
+    const [nearbyDonations, setNearbyDonations] = useState<any[]>([]);
+    // For donors
+    const [myDonations, setMyDonations] = useState<any[]>([]);
+    const [nearbyOrphanages, setNearbyOrphanages] = useState<Record<number, any[]>>({});
 
     useEffect(() => {
         if (auth?.user) {
-            const endpoint = auth.user.role === 'recipient'
-                ? `/api/donations/nearby?lat=${auth.user.latitude}&lon=${auth.user.longitude}`
-                : `/api/orphanages/nearby?lat=${auth.user.latitude}&lon=${auth.user.longitude}`;
-
-            axios.get(`http://localhost:3001${endpoint}`)
-                .then(response => {
-                    setData(response.data);
-                    setLoading(false);
-                })
-                .catch(error => {
-                    console.error("Error fetching data:", error);
-                    setLoading(false);
-                });
+            if (auth.user.role === 'recipient') {
+                axios.get(`http://localhost:3001/api/donations/nearby?lat=${auth.user.latitude}&lon=${auth.user.longitude}`)
+                    .then(response => {
+                        setNearbyDonations(response.data);
+                        setLoading(false);
+                    });
+            } else if (auth.user.role === 'donor') {
+                axios.get(`http://localhost:3001/api/donations/mine/${auth.user.id}`)
+                    .then(response => {
+                        setMyDonations(response.data);
+                        // For each available donation, fetch nearby orphanages
+                        response.data.forEach((donation: any) => {
+                            if (donation.status === 'available') {
+                                axios.get(`http://localhost:3001/api/orphanages/nearby?lat=${donation.latitude}&lon=${donation.longitude}`)
+                                    .then(orphanageResponse => {
+                                        setNearbyOrphanages(prev => ({ ...prev, [donation.id]: orphanageResponse.data }));
+                                    });
+                            }
+                        });
+                        setLoading(false);
+                    });
+            }
         }
     }, [auth?.user]);
 
@@ -32,7 +46,7 @@ const DashboardPage = () => {
         <>
             <Typography variant="h5" gutterBottom>Nearby Food Donations</Typography>
             <List>
-                {data.map(donation => (
+                {nearbyDonations.map(donation => (
                     <Paper key={donation.id} sx={{ mb: 2, p: 2 }}>
                         <ListItem>
                             <ListItemText
@@ -43,29 +57,47 @@ const DashboardPage = () => {
                         </ListItem>
                     </Paper>
                 ))}
-            </List>
-        </>
-    );
-    
-    const renderDonorDashboard = () => (
-        <>
-            <Typography variant="h5" gutterBottom>Nearby Orphanages</Typography>
-            <List>
-                {data.map(orphanage => (
-                    <Paper key={orphanage.id} sx={{ mb: 2, p: 2 }}>
-                        <ListItem>
-                            <ListItemText
-                                primary={`${orphanage.name} (Capacity: ${orphanage.capacity})`}
-                                secondary={`Contact: ${orphanage.contact_person} at ${orphanage.phone} | Address: ${orphanage.address}`}
-                            />
-                             <Typography variant="body2">{orphanage.distance.toFixed(2)} km away</Typography>
-                        </ListItem>
-                    </Paper>
-                ))}
+                 {nearbyDonations.length === 0 && <Typography>No available donations nearby at the moment.</Typography>}
             </List>
         </>
     );
 
+    const renderDonorDashboard = () => (
+        <>
+            <Typography variant="h5" gutterBottom>My Posted Donations</Typography>
+            <List>
+                {myDonations.map(donation => (
+                    <Paper key={donation.id} sx={{ mb: 3, p: 2 }}>
+                        <ListItem>
+                            <ListItemText
+                                primary={`${donation.event_name} - ${donation.food_type}`}
+                                secondary={`Status: ${donation.status}`}
+                            />
+                        </ListItem>
+                        {donation.status === 'available' && (
+                            <Box sx={{ pl: 2, pr: 2, pb: 1 }}>
+                                <Divider sx={{ my: 1 }}/>
+                                <Typography variant="subtitle1" sx={{mb: 1}}>Nearby Orphanages to Deliver To:</Typography>
+                                <List dense>
+                                    {nearbyOrphanages[donation.id]?.map((orphanage: any) => (
+                                        <ListItem key={orphanage.id} secondaryAction={
+                                            <Button component={Link} to={`/book-delivery/${donation.id}/${orphanage.id}`} variant="outlined" size="small">
+                                                Request Delivery
+                                            </Button>
+                                        }>
+                                            <ListItemText primary={orphanage.name} secondary={`${orphanage.distance.toFixed(2)} km away`} />
+                                        </ListItem>
+                                    ))}
+                                    {(!nearbyOrphanages[donation.id] || nearbyOrphanages[donation.id]?.length === 0) && <Typography variant="body2">No orphanages found nearby.</Typography>}
+                                </List>
+                            </Box>
+                        )}
+                    </Paper>
+                ))}
+                {myDonations.length === 0 && <Typography>You have not posted any donations yet.</Typography>}
+            </List>
+        </>
+    );
 
     return (
         <Layout>

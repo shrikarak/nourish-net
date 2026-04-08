@@ -21,7 +21,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                         <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>NourishNet</Link>
                     </Typography>
                     {auth?.user?.role === 'donor' && (
-                        <Button color="inherit" component={Link} to="/donate">Post a Donation</Button>
+                        <>
+                            <Button color="inherit" component={Link} to="/donate">Post a Donation</Button>
+                            <Button color="inherit" component={Link} to="/supplies">Order Supplies</Button>
+                        </>
                     )}
                     <Button color="inherit" component={Link} to="/profile">Profile</Button>
                     <Button color="inherit" onClick={handleLogout}>Logout</Button>
