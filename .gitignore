@@ -1,0 +1,18 @@
+
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Build artifacts
+/build
+.DS_Store
+
+# Server
+/server/node_modules
+/server/nourish-net.db
+/server/nourish-net.db-journal
+
+# Client
+/client/node_modules
+/client/build
